@@ -2,431 +2,127 @@ let transactions = [];
 
 let chart;
 
-
 // Load saved transactions
 
 window.onload = function () {
+  const saved = localStorage.getItem("transactions");
 
-    const saved = localStorage.getItem("transactions");
+  if (saved) {
+    transactions = JSON.parse(saved);
+  }
 
-    if (saved) {
+  displayTransactions();
 
-        transactions = JSON.parse(saved);
+  updateSummary();
 
-    }
+  updateChart();
 
-    displayTransactions();
+  document
+    .getElementById("typeFilter")
+    .addEventListener("change", displayTransactions);
 
-    updateSummary();
+  document
 
-    updateChart();
+    .getElementById("monthFilter")
 
+    .addEventListener(
+      "change",
 
+      displayTransactions,
+    );
 
-    document
-
-        .getElementById("typeFilter")
-
-        .addEventListener(
-
-            "change",
-
-            displayTransactions
-
-        );
-
-
-
-    document
-
-        .getElementById("monthFilter")
-
-        .addEventListener(
-
-            "change",
-
-            displayTransactions
-
-        );
-
-
-
-    document
-
-        .getElementById("date")
-
-        .valueAsDate = new Date();
-
-}
-
-
-
+  document.getElementById("date").valueAsDate = new Date();
+};
 
 // ADD TRANSACTION
 
+function addTransaction() {
+  const description = document.getElementById("description").value.trim();
 
-function addTransaction(){
+  const amount = Number(document.getElementById("amount").value);
 
+  const date = document.getElementById("date").value;
 
-    const description =
+  const category = document.getElementById("category").value;
 
-    document
+  const type = document.querySelector('input[name="type"]:checked').value;
 
-    .getElementById(
+  if (description === "" || amount <= 0 || !date) {
+    alert("Please fill all fields");
 
-        "description"
+    return;
+  }
 
-    ).value.trim();
+  const transaction = {
+    id: Date.now(),
 
+    description,
 
+    amount,
 
+    category,
 
-    const amount = Number(
+    type,
 
-    document
+    date,
+  };
 
-    .getElementById(
+  transactions.unshift(transaction);
 
-        "amount"
+  localStorage.setItem(
+    "transactions",
 
-    ).value
+    JSON.stringify(transactions),
+  );
 
-    );
+  displayTransactions();
 
+  updateSummary();
 
+  updateChart();
 
-
-    const date =
-
-    document
-
-    .getElementById(
-
-        "date"
-
-    ).value;
-
-
-
-
-    const category =
-
-    document
-
-    .getElementById(
-
-        "category"
-
-    ).value;
-
-
-
-
-    const type =
-
-    document
-
-    .querySelector(
-
-    'input[name="type"]:checked'
-
-    ).value;
-
-
-
-
-
-    if(
-
-        description===""
-
-        ||
-
-        amount<=0
-
-        ||
-
-        !date
-
-    ){
-
-        alert(
-
-        "Please fill all fields"
-
-        );
-
-        return;
-
-    }
-
-
-
-
-
-    const transaction={
-
-
-        id:Date.now(),
-
-
-        description,
-
-
-        amount,
-
-
-        category,
-
-
-        type,
-
-
-        date
-
-
-    };
-
-
-
-
-
-    transactions.unshift(
-
-        transaction
-
-    );
-
-
-
-
-
-    localStorage.setItem(
-
-        "transactions",
-
-        JSON.stringify(
-
-            transactions
-
-        )
-
-    );
-
-
-
-    displayTransactions();
-
-    updateSummary();
-
-    updateChart();
-
-
-
-    clearForm();
-
+  clearForm();
 }
-
-
-
 
 // CLEAR FORM
 
+function clearForm() {
+  document.getElementById("description").value = "";
 
-function clearForm(){
+  document.getElementById("amount").value = "";
 
+  document.getElementById("category").selectedIndex = 0;
 
-
-document
-
-.getElementById(
-
-"description"
-
-).value="";
-
-
-
-document
-
-.getElementById(
-
-"amount"
-
-).value="";
-
-
-
-document
-
-.getElementById(
-
-"category"
-
-).selectedIndex=0;
-
-
-
-document
-
-.getElementById(
-
-"date"
-
-).valueAsDate=
-
-new Date();
-
-
+  document.getElementById("date").valueAsDate = new Date();
 }
-
-
-
-
-
 
 // DISPLAY TRANSACTIONS
 
+function displayTransactions() {
+  const list = document.getElementById("transactionList");
 
+  list.innerHTML = "";
 
-function displayTransactions(){
+  let filtered = [...transactions];
 
+  const typeFilter = document.getElementById("typeFilter").value;
 
+  const monthFilter = document.getElementById("monthFilter").value;
 
-const list=
+  if (typeFilter !== "all") {
+    filtered = filtered.filter((t) => t.type === typeFilter);
+  }
 
+  if (monthFilter !== "all") {
+    filtered = filtered.filter((t) => {
+      const month = new Date(t.date).getMonth();
 
-document
+      return month == monthFilter;
+    });
+  }
 
-.getElementById(
-
-"transactionList"
-
-);
-
-
-
-
-list.innerHTML="";
-
-
-
-
-
-let filtered=[
-
-...transactions
-
-];
-
-
-
-
-
-const typeFilter=
-
-document
-
-.getElementById(
-
-"typeFilter"
-
-).value;
-
-
-
-
-const monthFilter=
-
-document
-
-.getElementById(
-
-"monthFilter"
-
-).value;
-
-
-
-
-
-
-if(
-
-typeFilter!=="all"
-
-){
-
-
-filtered=
-
-filtered.filter(
-
-
-t=>
-
-t.type===typeFilter
-
-
-);
-
-
-}
-
-
-
-
-
-
-
-if(
-
-monthFilter!=="all"
-
-){
-
-
-filtered=
-
-filtered.filter(
-
-
-t=>{
-
-
-const month=
-
-new Date(
-
-t.date
-
-).getMonth();
-
-
-
-return month==monthFilter;
-
-
-
-});
-
-
-}
-
-
-
-
-
-
-
-
-if(
-
-filtered.length===0
-
-){
-
-list.innerHTML=`
+  if (filtered.length === 0) {
+    list.innerHTML = `
 
 <p
 
@@ -448,24 +144,11 @@ Add your first entry above.
 
 `;
 
-return;
+    return;
+  }
 
-}
-
-
-
-
-
-
-
-
-filtered.forEach(
-
-
-t=>{
-
-
-list.innerHTML+=`
+  filtered.forEach((t) => {
+    list.innerHTML += `
 
 
 <div class="transaction">
@@ -497,11 +180,7 @@ ${t.category}
 
 <div class="date">
 
-${formatDate(
-
-t.date
-
-)}
+${formatDate(t.date)}
 
 </div>
 
@@ -528,19 +207,7 @@ ${t.type}"
 >
 
 
-${
-
-t.type==="income"
-
-?
-
-"+"
-
-:
-
-"-"
-
-}
+${t.type === "income" ? "+" : "-"}
 
 
 ₹${t.amount}
@@ -583,599 +250,175 @@ ${t.id}
 </div>
 
 `;
-
-});
-
-
-
+  });
 }
-
-
-
-
-
-
-
 
 // DELETE TRANSACTION
 
+function deleteTransaction(id) {
+  transactions = transactions.filter((t) => t.id !== id);
 
+  localStorage.setItem(
+    "transactions",
 
-function deleteTransaction(id){
+    JSON.stringify(transactions),
+  );
 
+  displayTransactions();
 
+  updateSummary();
 
-transactions=
-
-
-transactions.filter(
-
-
-t=>
-
-
-t.id!==id
-
-
-);
-
-
-
-
-
-localStorage.setItem(
-
-"transactions",
-
-JSON.stringify(
-
-transactions
-
-)
-
-);
-
-
-
-
-
-displayTransactions();
-
-updateSummary();
-
-updateChart();
-
-
+  updateChart();
 }
-
-
-
-
-
-
-
-
 
 // SUMMARY
 
+function updateSummary() {
+  let income = 0;
 
+  let expense = 0;
 
-function updateSummary(){
+  transactions.forEach((t) => {
+    if (t.type === "income") {
+      income += t.amount;
+    } else {
+      expense += t.amount;
+    }
+  });
 
+  const balance = income - expense;
 
+  document.getElementById("income").innerText = "₹" + income;
 
-let income=0;
+  document.getElementById("expense").innerText = "₹" + expense;
 
-
-
-let expense=0;
-
-
-
-
-
-transactions.forEach(
-
-
-t=>{
-
-
-
-if(
-
-t.type==="income"
-
-){
-
-
-income+=
-
-t.amount;
-
-
+  document.getElementById("balance").innerText = "₹" + balance;
 }
-
-
-
-else{
-
-
-expense+=
-
-t.amount;
-
-
-}
-
-
-});
-
-
-const balance=
-
-income-expense;
-
-
-
-
-
-
-document
-
-.getElementById(
-
-"income"
-
-).innerText=
-
-
-"₹"+income;
-
-
-
-
-
-
-
-document
-
-.getElementById(
-
-"expense"
-
-).innerText=
-
-
-"₹"+expense;
-
-
-
-
-
-
-
-document
-
-.getElementById(
-
-"balance"
-
-).innerText=
-
-
-"₹"+balance;
-
-}
-
-
-
-
-
-
-
-
-
 
 // PIE CHART
 
+function updateChart() {
+  const totals = {};
 
+  transactions.forEach((t) => {
+    if (t.type === "expense") {
+      if (totals[t.category]) {
+        totals[t.category] += t.amount;
+      } else {
+        totals[t.category] = t.amount;
+      }
+    }
+  });
 
+  const labels = Object.keys(totals);
 
-function updateChart(){
+  const data = Object.values(totals);
 
+  const colors = [
+    "#6366f1",
 
+    "#22c55e",
 
-const totals={};
+    "#f59e0b",
 
+    "#ef4444",
 
+    "#14b8a6",
 
+    "#a855f7",
 
+    "#ec4899",
 
+    "#0ea5e9",
 
-transactions.forEach(
+    "#64748b",
+  ];
 
+  if (chart) {
+    chart.destroy();
+  }
 
-t=>{
+  const ctx = document.getElementById("pieChart");
 
+  chart = new Chart(
+    ctx,
 
+    {
+      type: "pie",
 
-if(
+      data: {
+        labels: labels,
 
-t.type==="expense"
+        datasets: [
+          {
+            data: data,
 
-){
+            backgroundColor: colors,
+          },
+        ],
+      },
 
+      options: {
+        responsive: true,
 
-
-if(
-
-totals[
-
-t.category
-
-]
-
-){
-
-
-totals[
-
-t.category
-
-]+=
-
-t.amount;
-
-
+        plugins: {
+          legend: {
+            position: "bottom",
+          },
+        },
+      },
+    },
+  );
 }
-
-
-
-else{
-
-
-totals[
-
-t.category
-
-]=
-
-t.amount;
-
-
-}
-
-
-
-}
-
-
-
-});
-
-
-
-
-
-
-
-const labels=
-
-
-Object.keys(
-
-totals
-
-);
-
-
-
-
-const data=
-
-
-Object.values(
-
-totals
-
-);
-
-
-
-
-
-
-const colors=[
-
-
-"#6366f1",
-
-"#22c55e",
-
-"#f59e0b",
-
-"#ef4444",
-
-"#14b8a6",
-
-"#a855f7",
-
-"#ec4899",
-
-"#0ea5e9",
-
-"#64748b"
-
-
-];
-
-
-
-
-
-
-
-
-if(chart){
-
-chart.destroy();
-
-}
-
-
-
-
-
-
-const ctx=
-
-
-document
-
-.getElementById(
-
-"pieChart"
-
-);
-
-
-
-
-
-
-
-
-chart=
-
-
-new Chart(
-
-
-ctx,
-
-
-{
-
-
-type:"pie",
-
-
-
-data:{
-
-
-labels:labels,
-
-
-
-datasets:[{
-
-
-data:data,
-
-
-backgroundColor:
-
-colors
-
-
-
-}]
-
-},
-
-
-
-
-
-options:{
-
-
-responsive:true,
-
-
-
-plugins:{
-
-
-
-legend:{
-
-
-position:
-
-"bottom"
-
-
-}
-
-
-
-}
-
-
-
-}
-
-
-
-}
-
-
-
-);
-
-
-
-}
-
-
-
-
-
-
-
 
 // FORMAT DATE
 
+function formatDate(date) {
+  const options = {
+    day: "numeric",
 
+    month: "short",
 
-function formatDate(date){
+    year: "numeric",
+  };
 
+  return new Date(date).toLocaleDateString(
+    "en-IN",
 
-
-const options={
-
-
-day:"numeric",
-
-
-month:"short",
-
-
-year:"numeric"
-
-
-};
-
-
-
-
-
-return new Date(
-
-date
-
-).toLocaleDateString(
-
-"en-IN",
-
-options
-
-);
-
-
+    options,
+  );
 }
-
-
-
-
-
-
-
-
 
 // REAL AI USING GEMINI API
 
-
-
 async function getAdvice() {
+  const adviceBox = document.getElementById("advice");
 
+  if (transactions.length === 0) {
+    adviceBox.innerHTML = "Add some transactions first.";
 
+    return;
+  }
 
-const adviceBox =
+  let expenseTotals = {};
 
-document.getElementById(
+  transactions.forEach((t) => {
+    if (t.type === "expense") {
+      if (expenseTotals[t.category]) {
+        expenseTotals[t.category] += t.amount;
+      } else {
+        expenseTotals[t.category] = t.amount;
+      }
+    }
+  });
 
-"advice"
+  let expenseText = "";
 
-);
+  for (let category in expenseTotals) {
+    expenseText += `${category}: ₹${expenseTotals[category]}\n`;
+  }
 
-
-
-if(transactions.length===0){
-
-adviceBox.innerHTML=
-
-"Add some transactions first.";
-
-return;
-
-}
-
-
-
-let expenseTotals={};
-
-
-
-transactions.forEach(t=>{
-
-
-if(t.type==="expense"){
-
-
-if(
-
-expenseTotals[t.category]
-
-){
-
-expenseTotals[t.category]+=
-
-t.amount;
-
-}
-
-
-else{
-
-expenseTotals[t.category]=
-
-t.amount;
-
-}
-
-}
-
-
-});
-
-
-
-
-let expenseText="";
-
-
-for(
-
-let category
-
-in
-
-expenseTotals
-
-){
-
-expenseText+=
-
-`${category}: ₹${expenseTotals[category]}\n`;
-
-}
-
-
-
-const prompt=`
+  const prompt = `
 
 You are a personal finance advisor.
 
@@ -1195,144 +438,57 @@ Give:
 
 `;
 
+  adviceBox.innerHTML = "Generating advice...";
 
+  const API_KEY = "YOUR_API_KEY";
 
+  const url = `https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash:generateContent?key=${API_KEY}`;
 
-adviceBox.innerHTML=
+  const body = {
+    contents: [
+      {
+        parts: [
+          {
+            text: prompt,
+          },
+        ],
+      },
+    ],
+  };
 
-"Generating advice...";
+  try {
+    const response = await fetch(
+      url,
 
+      {
+        method: "POST",
 
+        headers: {
+          "Content-Type": "application/json",
+        },
 
-const API_KEY="YOUR_API_KEY";
+        body: JSON.stringify(body),
+      },
+    );
 
+    const data = await response.json();
 
-const url =
-`https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash:generateContent?key=${API_KEY}`;
+    const answer = data.candidates[0].content.parts[0].text;
 
+    const cleanAnswer = answer
 
-const body={
+      .replace(/\*\*/g, "")
 
-contents:[
+      .replace(/\*/g, "");
 
-{
+    advice.innerHTML = cleanAnswer.replace(
+      /\n/g,
 
-parts:[
+      "<br>",
+    );
+  } catch (error) {
+    adviceBox.innerHTML = "Failed to get AI advice.";
 
-{
-
-text:prompt
-
-}
-
-]
-
-}
-
-]
-
-};
-
-
-
-
-try{
-
-
-const response=
-
-await fetch(
-
-url,
-
-{
-
-method:"POST",
-
-headers:{
-
-"Content-Type":
-
-"application/json"
-
-},
-
-body:
-
-JSON.stringify(
-
-body
-
-)
-
-}
-
-);
-
-
-
-
-const data=
-
-await response.json();
-
-
-
-
-const answer=
-
-data
-
-.candidates[0]
-
-.content
-
-.parts[0]
-
-.text;
-
-
-
-
-const cleanAnswer =
-
-answer
-
-.replace(/\*\*/g,"")
-
-.replace(/\*/g,"");
-
-
-
-advice.innerHTML =
-
-cleanAnswer.replace(
-
-/\n/g,
-
-"<br>"
-
-);
-
-
-
-}
-
-
-catch(error){
-
-
-adviceBox.innerHTML=
-
-"Failed to get AI advice.";
-
-
-
-console.log(error);
-
-
-}
-
-
-
+    console.log(error);
+  }
 }
